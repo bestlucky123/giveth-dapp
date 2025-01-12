@@ -84,6 +84,28 @@ const TraceDescription = ({
     [onChange],
   );
 
+  const validateDescription = (_, value) => {
+    if (!value) {
+      return Promise.reject('Description is required');
+    }
+
+    const textLength = getHtmlText(value).length;
+    if (textLength < 10) {
+      return Promise.reject('Description must be at least 10 characters');
+    }
+    if (textLength > 20000) {
+      return Promise.reject('Description cannot exceed 20,000 characters');
+    }
+
+    // Check for basic HTML structure
+    const hasValidHtml = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/.test(value);
+    if (!hasValidHtml) {
+      return Promise.reject('Please provide properly formatted content');
+    }
+
+    return Promise.resolve();
+  };
+
   return (
     <Form.Item
       name={id}
@@ -98,24 +120,8 @@ const TraceDescription = ({
           message: 'Description is required',
         },
         {
-          type: 'string',
-          message: 'Description must be text',
-        },
-        {
-          validator: (_, val) => {
-            if (!val) {
-              return Promise.reject('Description is required');
-            }
-            const textLength = getHtmlText(val).length;
-            if (textLength < 10) {
-              return Promise.reject('Please provide at least 10 characters');
-            }
-            if (textLength > 20000) {
-              return Promise.reject('Description cannot exceed 20,000 characters');
-            }
-            return Promise.resolve();
-          },
-        },
+          validator: validateDescription,
+        }
       ]}
       validateTrigger={['onChange', 'onBlur']}
     >
@@ -128,27 +134,29 @@ const TraceDescription = ({
         key={id}
         disabled={disabled}
         initialValue={initialValue}
+        aria-label="Trace description editor"
+        role="textbox"
+        aria-required="true"
       />
     </Form.Item>
   );
 };
 
 TraceDescription.propTypes = {
-  value: PropTypes.string.isRequired,
+  value: PropTypes.string,
   onChange: PropTypes.func.isRequired,
-  extra: PropTypes.string,
   placeholder: PropTypes.string,
-  label: PropTypes.string,
-  id: PropTypes.string,
+  label: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  extra: PropTypes.string,
   disabled: PropTypes.bool,
   initialValue: PropTypes.string,
 };
 
 TraceDescription.defaultProps = {
-  extra: '',
+  value: '',
   placeholder: '',
-  label: 'Description',
-  id: '',
+  extra: '',
   disabled: false,
   initialValue: '',
 };
