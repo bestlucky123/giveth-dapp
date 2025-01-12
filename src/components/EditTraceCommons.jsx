@@ -396,33 +396,63 @@ TraceToken.defaultProps = {
   disabled: false,
 };
 
-const TraceRecipientAddress = ({ label, onChange, value, disabled }) => (
-  <Form.Item
-    name="recipientAddress"
-    label={label}
-    className="custom-form-item"
-    extra="If you don’t change this field the address associated with your account will be
-              used."
-    rules={[
-      {
-        validator: async (_, inputValue) => {
-          if (inputValue && !Web3.utils.isAddress(inputValue)) {
-            throw new Error('Please insert a valid Ethereum address.');
-          }
-        },
-      },
-    ]}
-  >
-    <Input
-      value={value}
+const TraceRecipientAddress = ({ label, onChange, value, disabled }) => {
+  const validateAddress = async (_, inputValue) => {
+    if (!inputValue) {
+      return Promise.reject('Recipient address is required');
+    }
+    
+    if (!Web3.utils.isAddress(inputValue)) {
+      return Promise.reject('Please enter a valid Ethereum address');
+    }
+
+    if (inputValue === '0x0000000000000000000000000000000000000000') {
+      return Promise.reject('Cannot use zero address');
+    }
+
+    // Check if address is a contract
+    try {
+      const code = await web3.eth.getCode(inputValue);
+      if (code !== '0x') {
+        return Promise.reject('Cannot send to a contract address');
+      }
+    } catch (error) {
+      return Promise.reject('Error validating address');
+    }
+
+    return Promise.resolve();
+  };
+
+  return (
+    <Form.Item
       name="recipientAddress"
-      placeholder="0x"
-      onChange={onChange}
-      required
-      disabled={disabled}
-    />
-  </Form.Item>
-);
+      label={label}
+      className="custom-form-item"
+      extra="If you don't change this field the address associated with your account will be used."
+      rules={[
+        {
+          required: true,
+          message: 'Recipient address is required',
+        },
+        {
+          validator: validateAddress,
+        }
+      ]}
+      validateTrigger={['onChange', 'onBlur']}
+    >
+      <Input
+        value={value}
+        name="recipientAddress"
+        placeholder="0x"
+        onChange={onChange}
+        disabled={disabled}
+        aria-label="Recipient ethereum address"
+        autoComplete="off"
+        maxLength={42}
+      />
+    </Form.Item>
+  );
+};
 
 TraceRecipientAddress.propTypes = {
   label: PropTypes.string.isRequired,
@@ -430,6 +460,7 @@ TraceRecipientAddress.propTypes = {
   value: PropTypes.string,
   disabled: PropTypes.bool,
 };
+
 TraceRecipientAddress.defaultProps = {
   value: '',
   disabled: false,
