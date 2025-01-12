@@ -94,19 +94,30 @@ const TraceDescription = ({
       initialValue={initialValue}
       rules={[
         {
-          type: 'string',
+          required: true,
           message: 'Description is required',
         },
         {
-          validator: (rule, val) => {
-            if (val && getHtmlText(val).length > 10) {
-              return Promise.resolve();
+          type: 'string',
+          message: 'Description must be text',
+        },
+        {
+          validator: (_, val) => {
+            if (!val) {
+              return Promise.reject('Description is required');
             }
-            // eslint-disable-next-line prefer-promise-reject-errors
-            return Promise.reject('Please provide at least 10 characters in description');
+            const textLength = getHtmlText(val).length;
+            if (textLength < 10) {
+              return Promise.reject('Please provide at least 10 characters');
+            }
+            if (textLength > 20000) {
+              return Promise.reject('Description cannot exceed 20,000 characters');
+            }
+            return Promise.resolve();
           },
         },
       ]}
+      validateTrigger={['onChange', 'onBlur']}
     >
       <Editor
         name="description"
