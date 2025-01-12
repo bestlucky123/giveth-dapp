@@ -22,7 +22,16 @@ const TraceTitle = ({ extra, onChange, value, disabled }) => (
         min: 3,
         message: 'Please provide at least 3 characters',
       },
+      {
+        max: 100,
+        message: 'Title cannot exceed 100 characters',
+      },
+      {
+        pattern: /^[a-zA-Z0-9\s\-_.,!?()]+$/,
+        message: 'Title contains invalid characters',
+      }
     ]}
+    validateTrigger={['onChange', 'onBlur']}
   >
     <Input
       value={value}
@@ -30,6 +39,17 @@ const TraceTitle = ({ extra, onChange, value, disabled }) => (
       name="title"
       placeholder="e.g. Support continued Development"
       onChange={onChange}
+      onBlur={(e) => {
+        // Trim whitespace on blur
+        if (e.target.value) {
+          onChange({
+            target: {
+              name: 'title',
+              value: e.target.value.trim()
+            }
+          });
+        }
+      }}
     />
   </Form.Item>
 );
